@@ -1,0 +1,7 @@
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteBase /poss/
+
+    RewriteCond %{REQUEST_URI} !^/poss/public/
+    RewriteRule ^(.*)$ public/$1 [L,QSA]
+</IfModule>
