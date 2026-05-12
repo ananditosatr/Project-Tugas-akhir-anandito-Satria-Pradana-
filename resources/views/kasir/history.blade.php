@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'History Transaksi - F&B POS Critasena')
+@section('title', 'History Transaksi - ' . config('app.name'))
 
 @section('content')
 <div class="min-h-screen bg-gray-50 dark:bg-gray-900">

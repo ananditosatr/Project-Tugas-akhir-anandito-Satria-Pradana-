@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Order Walk-in - F&B POS Critasena')
+@section('title', 'Order Walk-in - ' . config('app.name'))
 
 @section('content')
 <div class="min-h-screen bg-gray-50 dark:bg-gray-900">

@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Manajemen Menu - F&B POS Critasena')
+@section('title', 'Manajemen Menu - ' . config('app.name'))
 
 @section('content')
 <div class="min-h-screen bg-gray-50 dark:bg-gray-900">

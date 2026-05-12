@@ -21,14 +21,22 @@ class PaymentController extends Controller
 
             $order = Order::findOrFail($validated['order_id']);
 
-            if ($order->status !== 'pending_payment') {
+            // Check if payment method is cash (cash doesn't need proof image)
+            if ($order->payment_method === 'cash') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Pesanan ini adalah pembayaran tunai. Tidak perlu bukti pembayaran.',
+                ], 400);
+            }
+
+            if ($order->status !== 'pending_payment' && $order->status !== 'pending_verification') {
                 return response()->json([
                     'success' => false,
                     'message' => 'Order tidak dalam status menunggu pembayaran.',
                 ], 400);
             }
 
-            if ($order->payment_deadline < now()) {
+            if ($order->payment_deadline && $order->payment_deadline < now()) {
                 $order->update(['status' => 'cancelled']);
                 return response()->json([
                     'success' => false,
@@ -49,6 +57,7 @@ class PaymentController extends Controller
 
             $paymentData = [
                 'proof_image_base64' => $base64Image,
+                'payment_method'     => 'qris',
                 'status'             => 'uploaded',
                 'uploaded_at'        => now(),
                 'verified_at'        => null,

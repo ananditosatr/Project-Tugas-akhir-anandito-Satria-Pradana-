@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Invoice {{ $order->order_number }} - F&B POS Critasena')
+@section('title', 'Invoice {{ $order->order_number }} - ' . config('app.name'))
 
 @section('content')
 <div class="min-h-screen bg-gray-100 dark:bg-gray-900 py-8 px-4">
@@ -19,7 +19,7 @@
                 </svg>
                 Cetak Invoice
             </button>
-            @if($order->payment_method === 'walkin')
+            @if($order->payment_method === 'cash')
             <a href="{{ route('kasir.walkin') }}"
                 class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm font-medium transition">
                 + Order Baru
@@ -80,7 +80,13 @@
                 <div>
                     <p class="text-xs text-gray-400">Metode Bayar</p>
                     <p class="font-semibold text-gray-800 dark:text-white">
-                        {{ $order->payment_method === 'walkin' ? 'Tunai / Walk-in' : 'Transfer Bank' }}
+                        @if($order->payment_method === 'cash')
+                            Tunai
+                        @elseif($order->payment_method === 'qris')
+                            QRIS
+                        @else
+                            {{ $order->payment_method === 'walkin' ? 'Tunai / Walk-in' : 'Transfer Bank' }}
+                        @endif
                     </p>
                 </div>
                 @if($order->notes)
@@ -114,7 +120,7 @@
                 <span class="font-bold text-gray-700 dark:text-gray-300">TOTAL BAYAR</span>
                 <span class="text-2xl font-bold text-red-600 dark:text-red-400">Rp {{ number_format($order->total_amount, 0, ',', '.') }}</span>
             </div>
-            @if($order->payment_method === 'walkin')
+            @if($order->payment_method === 'cash')
             <p class="text-xs text-green-600 dark:text-green-400 mt-1 font-medium">Lunas - Bayar Tunai</p>
             @endif
         </div>

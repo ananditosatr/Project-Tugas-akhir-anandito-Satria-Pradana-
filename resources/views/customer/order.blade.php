@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Order Menu - F&B POS Critasena')
+@section('title', 'Order Menu - ' . config('app.name'))
 
 @section('content')
 <div class="min-h-screen bg-gray-50 dark:bg-gray-900">
@@ -97,7 +97,69 @@
     </div>
 </div>
 
-<!-- Step 1: QRIS Modal — scan & bayar dulu -->
+<!-- Step 1: Payment Method Selection Modal -->
+<div id="payment-method-modal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+    <div class="bg-white dark:bg-gray-800 rounded-2xl w-full max-w-md overflow-y-auto max-h-[90vh]">
+        <div class="p-6">
+            <!-- Header -->
+            <div class="flex items-center justify-between mb-4">
+                <button onclick="closePaymentMethod()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+                <h2 class="text-base font-bold text-gray-900 dark:text-white">Pilih Metode Pembayaran</h2>
+                <div class="w-5"></div>
+            </div>
+
+            <!-- Total -->
+            <div class="text-center mb-6">
+                <p class="text-xs text-gray-500 dark:text-gray-400">Total yang harus dibayar</p>
+                <p class="text-3xl font-bold text-red-600 dark:text-red-400 mt-0.5">Rp <span id="method-total"></span></p>
+            </div>
+
+            <!-- Payment Method Options -->
+            <div class="space-y-3">
+                <!-- Cash Option -->
+                <button onclick="selectPaymentMethod('cash')" class="w-full p-4 border-2 border-gray-200 dark:border-gray-600 rounded-xl hover:border-green-500 hover:bg-green-50 dark:hover:bg-green-900/20 transition text-left">
+                    <div class="flex items-center gap-3">
+                        <div class="w-6 h-6 rounded-full border-2 border-gray-300 dark:border-gray-500 flex items-center justify-center">
+                            <svg class="w-3 h-3 text-green-600 hidden" id="cash-check" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                            </svg>
+                        </div>
+                        <div>
+                            <p class="font-semibold text-gray-900 dark:text-white">Tunai</p>
+                            <p class="text-xs text-gray-500 dark:text-gray-400">Bayar langsung saat ambil pesanan</p>
+                        </div>
+                    </div>
+                </button>
+
+                <!-- QRIS Option -->
+                <button onclick="selectPaymentMethod('qris')" class="w-full p-4 border-2 border-red-500 dark:border-red-600 bg-red-50 dark:bg-red-900/20 rounded-xl hover:border-red-600 transition text-left">
+                    <div class="flex items-center gap-3">
+                        <div class="w-6 h-6 rounded-full border-2 border-red-600 flex items-center justify-center">
+                            <svg class="w-3 h-3 text-red-600" id="qris-check" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                            </svg>
+                        </div>
+                        <div>
+                            <p class="font-semibold text-gray-900 dark:text-white">QRIS</p>
+                            <p class="text-xs text-gray-500 dark:text-gray-400">Scan QR code dengan e-wallet atau m-banking</p>
+                        </div>
+                    </div>
+                </button>
+            </div>
+
+            <button id="continue-payment-btn" onclick="continueToPayment()" disabled
+                class="w-full mt-6 py-3.5 bg-gray-300 dark:bg-gray-700 text-gray-500 dark:text-gray-400 rounded-xl font-bold text-sm cursor-not-allowed transition">
+                Lanjutkan
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Step 2: QRIS Modal — scan & bayar dulu -->
 <div id="checkout-modal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
     <div class="bg-white dark:bg-gray-800 rounded-2xl w-full max-w-md overflow-y-auto max-h-[90vh]">
         <div class="p-6">
@@ -121,10 +183,11 @@
             <!-- QRIS Static Image -->
             <div class="flex flex-col items-center mb-4">
                 <div class="bg-white border-2 border-gray-200 dark:border-gray-600 rounded-2xl p-3 shadow-inner">
-                    <img src="/images/qris_simulasi.png" alt="QRIS Critasena" class="w-56 h-56 object-contain">
+                    <img src="/images/qris_suprezz.png" alt="QRIS RUMAH CAKE SUPREZZ" class="w-56 h-56 object-contain">
                 </div>
                 <p class="text-xs text-gray-400 dark:text-gray-500 mt-2 text-center">
-                    Scan menggunakan m-banking atau e-wallet kamu
+                    Scan menggunakan m-banking atau e-wallet kamu<br>
+                    <strong>RUMAH CAKE SUPREZZ</strong>
                 </p>
             </div>
 
@@ -244,6 +307,7 @@ let currentOrder = null;
 let trackingInterval = null;
 let proofFile = null;
 let proofBase64 = null;
+let selectedPaymentMethod = null;
 
 // ===== DARK MODE =====
 function toggleDarkMode() {
@@ -436,13 +500,82 @@ function renderCart() {
 function proceedCheckout() {
     if (cart.length === 0) return;
     closeCart();
-    openQRISModal();
+    openPaymentMethodModal();
+}
+
+function openPaymentMethodModal() {
+    const total = cart.reduce((s, i) => s + (i.price * i.quantity), 0);
+    document.getElementById('method-total').textContent = total.toLocaleString('id-ID');
+    document.getElementById('payment-method-modal').classList.remove('hidden');
+    selectedPaymentMethod = null;
+    updatePaymentMethodUI();
+}
+
+function closePaymentMethod() {
+    document.getElementById('payment-method-modal').classList.add('hidden');
+    selectedPaymentMethod = null;
+}
+
+function selectPaymentMethod(method) {
+    selectedPaymentMethod = method;
+    updatePaymentMethodUI();
+}
+
+function updatePaymentMethodUI() {
+    const continueBtn = document.getElementById('continue-payment-btn');
+    if (selectedPaymentMethod) {
+        continueBtn.disabled = false;
+        continueBtn.className = 'w-full mt-6 py-3.5 bg-red-600 hover:bg-red-700 text-white rounded-xl font-bold text-sm transition cursor-pointer';
+    } else {
+        continueBtn.disabled = true;
+        continueBtn.className = 'w-full mt-6 py-3.5 bg-gray-300 dark:bg-gray-700 text-gray-500 dark:text-gray-400 rounded-xl font-bold text-sm cursor-not-allowed transition';
+    }
+    
+    // Update UI checkmarks
+    const cashCheck = document.getElementById('cash-check');
+    const qrisCheck = document.getElementById('qris-check');
+    
+    if (selectedPaymentMethod === 'cash') {
+        cashCheck.classList.remove('hidden');
+        qrisCheck.classList.add('hidden');
+    } else if (selectedPaymentMethod === 'qris') {
+        cashCheck.classList.add('hidden');
+        qrisCheck.classList.remove('hidden');
+    } else {
+        cashCheck.classList.add('hidden');
+        qrisCheck.classList.add('hidden');
+    }
+}
+
+function continueToPayment() {
+    if (!selectedPaymentMethod) return;
+    
+    if (selectedPaymentMethod === 'cash') {
+        // For cash payment, skip QRIS screen and go directly to form
+        proofBase64 = null;
+        document.getElementById('payment-method-modal').classList.add('hidden');
+        document.getElementById('payment-modal').classList.remove('hidden');
+        document.getElementById('customer-name').focus();
+    } else if (selectedPaymentMethod === 'qris') {
+        // For QRIS, show QRIS payment screen
+        document.getElementById('payment-method-modal').classList.add('hidden');
+        openQRISModal();
+    }
 }
 
 function openQRISModal() {
     const total = cart.reduce((s, i) => s + (i.price * i.quantity), 0);
     document.getElementById('display-total').textContent = total.toLocaleString('id-ID');
     document.getElementById('checkout-modal').classList.remove('hidden');
+    // Reset file input
+    document.getElementById('proof-file-input').value = '';
+    proofFile = null;
+    proofBase64 = null;
+    document.getElementById('upload-placeholder').classList.remove('hidden');
+    document.getElementById('upload-preview').classList.add('hidden');
+    const btn = document.getElementById('sudah-bayar-btn');
+    btn.disabled = true;
+    btn.className = 'w-full py-3.5 bg-gray-300 dark:bg-gray-700 text-gray-500 dark:text-gray-400 rounded-xl font-bold text-sm cursor-not-allowed transition flex items-center justify-center gap-2';
 }
 
 function closeCheckout() {
@@ -499,21 +632,39 @@ function submitOrder() {
         document.getElementById('customer-wa').focus();
         return;
     }
+    
+    if (!selectedPaymentMethod) {
+        showToast('error', 'Pilih metode pembayaran');
+        return;
+    }
 
     const btn = document.getElementById('submit-payment-btn');
     btn.disabled = true;
     btn.textContent = 'Memproses...';
 
+    const orderData = {
+        customer_name: name,
+        no_whatsapp: wa,
+        notes: document.getElementById('order-notes').value,
+        payment_method: selectedPaymentMethod,
+        items: cart
+    };
+
+    // Add proof image for QRIS payment
+    if (selectedPaymentMethod === 'qris') {
+        if (!proofBase64) {
+            showToast('error', 'Silakan upload bukti pembayaran QRIS');
+            btn.disabled = false;
+            btn.textContent = 'Konfirmasi Pesanan';
+            return;
+        }
+        orderData.proof_image = proofBase64;
+    }
+
     fetch('/orders', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrfToken() },
-        body: JSON.stringify({
-            customer_name: name,
-            no_whatsapp: wa,
-            notes: document.getElementById('order-notes').value,
-            proof_image: proofBase64,
-            items: cart
-        })
+        body: JSON.stringify(orderData)
     })
     .then(r => r.json())
     .then(data => {
@@ -525,6 +676,7 @@ function submitOrder() {
             localStorage.setItem('active_order', data.order.order_number);
             document.getElementById('payment-modal').classList.add('hidden');
             resetPaymentForm();
+            selectedPaymentMethod = null;
             openTracking(data.order.order_number);
         } else {
             showToast('error', data.message || 'Gagal membuat pesanan');
@@ -538,11 +690,14 @@ function submitOrder() {
         btn.textContent = 'Konfirmasi Pesanan';
     });
 }
+    });
+}
 
 // ===== PAYMENT =====
 function resetPaymentForm() {
     proofFile = null;
     proofBase64 = null;
+    selectedPaymentMethod = null;
     document.getElementById('proof-file-input').value = '';
     document.getElementById('upload-placeholder').classList.remove('hidden');
     document.getElementById('upload-preview').classList.add('hidden');

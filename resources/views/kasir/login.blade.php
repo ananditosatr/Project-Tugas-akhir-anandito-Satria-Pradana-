@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Login Kasir -Point Of Sale Rumah Cake Suprezz')
+@section('title', config('app.name'))
 
 @section('content')
 <div class="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 px-4">

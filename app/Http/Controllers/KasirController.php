@@ -182,7 +182,7 @@ class KasirController extends Controller
                 'customer_name'  => $validated['customer_name'],
                 'total_amount'   => $totalAmount,
                 'status'         => 'processing',
-                'payment_method' => 'walkin',
+                'payment_method' => 'cash',
                 'notes'          => $validated['notes'] ?? null,
             ]);
 

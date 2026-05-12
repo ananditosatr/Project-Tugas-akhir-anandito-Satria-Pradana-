@@ -9,6 +9,7 @@ class Payment extends Model
 {
     protected $fillable = [
         'order_id',
+        'payment_method',
         'proof_image_base64',
         'status',
         'uploaded_at',
